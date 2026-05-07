@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 
-def load_base_tables(input_dir: str)-> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def load_base_tables(input_dir: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     occupation_nodes = pd.read_csv(f"{input_dir}/occupation_nodes.csv")
     skill_nodes = pd.read_csv(f"{input_dir}/skill_nodes.csv")
     occupation_skill_edges = pd.read_csv(f"{input_dir}/occupation_skill_edges.csv")

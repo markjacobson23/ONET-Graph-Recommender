@@ -8,6 +8,7 @@ data/processed/
 *.pkl
 *.parquet
 *.csv
+*.json
 
 # Secrets
 .env
