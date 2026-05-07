@@ -1,0 +1,37 @@
+# Data
+data/raw/
+data/processed/
+*.db
+*.sqlite
+*.sqlite3
+*.pt
+*.pkl
+*.parquet
+*.csv
+
+# Secrets
+.env
+.env.*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# PyCharm
+.idea/
+*.iml
+
+# Logs
+*.log
