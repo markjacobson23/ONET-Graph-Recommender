@@ -68,9 +68,89 @@ def rank_occupations(scores, occupation_nodes, top_k=10):
         .reset_index(drop=True)
     )
 
-    occupation_ranks = ranked_occupations[["onetsoc_code","occupation_idx", "occupation_title", "total_score"]]
+    occupation_ranks = ranked_occupations[
+        ["onetsoc_code","occupation_idx", "occupation_title", "total_score"]
+    ]
 
     return occupation_ranks
+
+def get_occupation_skill_contributions(
+    occupation_idx,
+    matched_skill_idxs,
+    occupation_skill_edges,
+    skill_nodes,
+):
+    matched_skill_subset = occupation_skill_edges[
+        (occupation_skill_edges["occupation_idx"] == occupation_idx)
+        & (occupation_skill_edges["skill_idx"].isin(matched_skill_idxs))
+    ].copy()
+
+    matched_skill_subset["contribution"] = (
+        matched_skill_subset["importance"] * matched_skill_subset["level"]
+    )
+
+    matched_skill_subset = matched_skill_subset.merge(
+        skill_nodes[["skill_idx", "skill_name"]],
+        on="skill_idx",
+        how="left",
+    )
+
+    out_df = (
+        matched_skill_subset[
+            ["skill_idx", "skill_name", "importance", "level", "contribution"]
+        ]
+        .sort_values("contribution", ascending=False)
+        .reset_index(drop=True)
+    )
+
+    return out_df
+
+
+
+def print_recommendations(
+    candidate_id,
+    candidate_name,
+    matched_skill_names,
+    unmatched_skills,
+    occupation_ranks,
+    matched_skill_idxs,
+    occupation_skill_edges,
+    skill_nodes,
+    top_k,
+):
+
+    print(f"\nCandidate ID: {candidate_id}")
+    print(f"Candidate Name: {candidate_name}")
+    print()
+    print("Matched Skills:")
+    for skill in matched_skill_names:
+        print(f"- {skill}")
+    print()
+
+    print("Unmatched Skills:")
+    for skill in unmatched_skills:
+        print(f"- {skill}")
+    if len(unmatched_skills) == 0:
+        print("all skills matched!")
+    print()
+
+    print("Top 10 Occupations:")
+    print()
+
+    for row in occupation_ranks.itertuples():
+        rank_prefix = f"{row.Index + 1}. "
+        rank_prefix = f"{rank_prefix:<3}"
+        blank_prefix = " " * len(rank_prefix)
+        print(f"{rank_prefix}{row.occupation_title} [{row.onetsoc_code}] - {row.total_score:.2f}")
+        print(f"{blank_prefix}Contributions:")
+        Contributions = get_occupation_skill_contributions(
+            row.occupation_idx, matched_skill_idxs, occupation_skill_edges, skill_nodes
+        )
+        for row in Contributions.itertuples():
+            print(f"{blank_prefix}- {row.skill_name}: importance={row.importance:.2f}, level={row.level:.2f}, contribution={row.contribution:.2f}")
+        print()
+
+
 
 def main():
 
@@ -102,25 +182,11 @@ def main():
     # rank occupations based on scores
     occupation_ranks = rank_occupations(scores, occupation_nodes, top_k=top_k)
 
+    # get matched skill names
     matched_skill_names = skill_nodes[skill_nodes['skill_idx'].isin(matched_skills)]['skill_name']
 
-    print(f"\nCandidate ID: {candidate_id}")
-
-    print(f"Candidate Name: {candidate_name}\n")
-    print("Matched Skills:")
-    for skill in matched_skill_names:
-        print(f"- {skill}")
-    print()
-    print("Unmatched Skills:")
-    for skill in unmatched_skills:
-        print(f"- {skill}")
-    if len(unmatched_skills) == 0:
-        print("all skills matched!")
-    print()
-
-    print(f"Top {top_k} Occupations:")
-    for row in occupation_ranks.itertuples():
-        print(f"{(row.Index + 1):5}. {row.occupation_title:50} {row.total_score:.2f}")
+    # print recommendations
+    print_recommendations(candidate_id, candidate_name, matched_skill_names, unmatched_skills, occupation_ranks, matched_skills, occupation_skill_edges, skill_nodes, top_k)
 
 if __name__ == "__main__":
     main()
