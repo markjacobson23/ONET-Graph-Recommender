@@ -3,9 +3,14 @@ project:
 
 paths:
   raw_db_path: "data/raw/onet_raw.db"
-  base_tables_dir: "data/processed/tables/base"
-  featured_tables_dir: "data/processed/tables/featured"
-  graph_dir: "data/processed/graphs"
+
+  base_nodes_dir: "data/processed/tables/base/nodes"
+  base_edges_dir: "data/processed/tables/base/edges"
+
+  featured_nodes_dir: "data/processed/tables/featured/nodes"
+  featured_edges_dir: "data/processed/tables/featured/edges"
+
+  processed_graphs_dir: "data/processed/graphs"
   profiles_dir: "profiles"
 
 profiles:
