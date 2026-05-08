@@ -1,7 +1,9 @@
 import sqlite3
 import pandas as pd
 from pathlib import Path
-def load_pivot_occupation_skill_rows(db_path: str):
+from src.utils.config import load_config, resolve_project_path
+
+def load_pivot_occupation_skill_rows(db_path: Path):
 
     pivot_query = """
     SELECT
@@ -122,14 +124,17 @@ def verification_check(occupation_nodes, skill_nodes, occupation_skill_edges, df
 
 def save_tables(occupation_nodes, skill_nodes, occupation_skill_edges, output_dir):
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    occupation_nodes.to_csv(f"{output_dir}/occupation_nodes.csv", index=False)
-    skill_nodes.to_csv(f"{output_dir}/skill_nodes.csv", index=False)
-    occupation_skill_edges.to_csv(f"{output_dir}/occupation_skill_edges.csv", index=False)
+    occupation_nodes.to_csv(output_dir / "occupation_nodes.csv", index=False)
+    skill_nodes.to_csv(output_dir / "skill_nodes.csv", index=False)
+    occupation_skill_edges.to_csv(output_dir / "occupation_skill_edges.csv", index=False)
 
 def main():
+    # load config dict
+    config = load_config()
 
-    db_path = "../../data/raw/onet_raw.db"
-    output_dir = "../../data/processed/tables/base"
+    # resolve paths
+    db_path = resolve_project_path(config["paths"]["raw_db_path"])
+    output_dir = resolve_project_path(config["paths"]["base_tables_dir"])
 
     # load and pivot raw data
     raw_df = load_pivot_occupation_skill_rows(db_path)

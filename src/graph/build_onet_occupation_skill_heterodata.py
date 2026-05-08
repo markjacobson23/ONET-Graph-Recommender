@@ -3,11 +3,12 @@ import torch
 from torch_geometric.data import HeteroData
 from pathlib import Path
 import json
+from src.utils.config import load_config, resolve_project_path
 
 def load_featured_tables(input_dir) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    occupation_nodes = pd.read_csv(f"{input_dir}/featured_occupation_nodes.csv")
-    skill_nodes = pd.read_csv(f"{input_dir}/featured_skill_nodes.csv")
-    occupation_skill_edges = pd.read_csv(f"{input_dir}/occupation_skill_edges.csv")
+    occupation_nodes = pd.read_csv(input_dir / "featured_occupation_nodes.csv")
+    skill_nodes = pd.read_csv(input_dir / "featured_skill_nodes.csv")
+    occupation_skill_edges = pd.read_csv(input_dir / "occupation_skill_edges.csv")
     return occupation_nodes, skill_nodes, occupation_skill_edges
 
 def get_feature_columns(node_table, metadata_columns):
@@ -185,14 +186,19 @@ def save_graph(data, metadata, output_dir):
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    torch.save(data, f"{output_dir}/heterodata.pt")
+    torch.save(data, output_dir / "heterodata.pt")
 
-    with open(f"{output_dir}/metadata.json", "w") as f:
+    with open(output_dir / "metadata.json", "w") as f:
         json.dump(metadata, f)
 
 def main():
-    input_dir = "../../data/processed/tables/featured"
-    output_dir = "../../data/processed/graphs"
+
+    # load config dict
+    config = load_config()
+
+    # resolve paths
+    input_dir = resolve_project_path(config["paths"]["featured_tables_dir"])
+    output_dir = resolve_project_path(config["paths"]["processed_graphs_dir"])
 
     # load tables
     occupation_nodes, skill_nodes, occupation_skill_edges = load_featured_tables(input_dir)
@@ -206,8 +212,10 @@ def main():
     # build heterogeneous graph
     data = build_heterodata(occupation_x, skill_x, occupation_requires_skill_edge_index, occupation_requires_skill_edge_attr)
 
+    # get feature columns
     occupation_feature_cols = get_feature_columns(occupation_nodes, ["onetsoc_code", "occupation_title", "occupation_idx"])
     skill_feature_cols = get_feature_columns(skill_nodes, ["skill_id", "skill_name", "skill_idx"])
+
     # build metadata
     metadata = build_metadata(occupation_nodes, skill_nodes, occupation_feature_cols, skill_feature_cols )
 
@@ -219,12 +227,6 @@ def main():
 
     print("Graph saved successfully.")
 
-data = torch.load(
-    "../../data/processed/graphs/heterodata.pt",
-    weights_only=False,
-)
-print(data)
-data.validate(raise_on_error=True)
 if __name__ == "__main__":
     main()
 

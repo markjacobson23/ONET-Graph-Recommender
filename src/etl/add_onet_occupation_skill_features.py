@@ -1,10 +1,11 @@
 import pandas as pd
 from pathlib import Path
+from src.utils.config import load_config, resolve_project_path
 
-def load_base_tables(input_dir: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    occupation_nodes = pd.read_csv(f"{input_dir}/occupation_nodes.csv")
-    skill_nodes = pd.read_csv(f"{input_dir}/skill_nodes.csv")
-    occupation_skill_edges = pd.read_csv(f"{input_dir}/occupation_skill_edges.csv")
+def load_base_tables(input_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    occupation_nodes = pd.read_csv(input_dir / "occupation_nodes.csv")
+    skill_nodes = pd.read_csv(input_dir / "skill_nodes.csv")
+    occupation_skill_edges = pd.read_csv(input_dir / "occupation_skill_edges.csv")
     return occupation_nodes, skill_nodes, occupation_skill_edges
 
 def build_occupation_features(occupation_skill_edges):
@@ -270,13 +271,19 @@ def save_featured_tables(
         output_dir
 ):
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    featured_occupation_nodes.to_csv(f"{output_dir}/featured_occupation_nodes.csv", index=False)
-    featured_skill_nodes.to_csv(f"{output_dir}/featured_skill_nodes.csv", index=False)
-    occupation_skill_edges.to_csv(f"{output_dir}/occupation_skill_edges.csv", index=False)
+    featured_occupation_nodes.to_csv(output_dir / "featured_occupation_nodes.csv", index=False)
+    featured_skill_nodes.to_csv(output_dir / "featured_skill_nodes.csv", index=False)
+    occupation_skill_edges.to_csv(output_dir / "occupation_skill_edges.csv", index=False)
 
 def main():
-    input_dir = "../../data/processed/tables/base"
-    output_dir = "../../data/processed/tables/featured"
+
+    # load config dict
+    config = load_config()
+
+    # resolve paths
+    input_dir = resolve_project_path(config["paths"]["base_tables_dir"])
+    output_dir = resolve_project_path(config["paths"]["featured_tables_dir"])
+
     # load base tables
     occupation_nodes, skill_nodes, occupation_skill_edges = load_base_tables(input_dir)
 

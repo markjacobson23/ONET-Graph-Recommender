@@ -1,0 +1,20 @@
+project:
+  name: "ONET Graph Recommender"
+
+paths:
+  raw_db_path: "data/raw/onet_raw.db"
+  base_tables_dir: "data/processed/tables/base"
+  featured_tables_dir: "data/processed/tables/featured"
+  graph_dir: "data/processed/graphs"
+  profiles_dir: "profiles"
+
+profiles:
+  default_candidate_profile: "mark_v1.json"
+
+graph:
+  heterodata_filename: "heterodata.pt"
+  metadata_filename: "metadata.json"
+
+baseline:
+  top_k: 10
+  score_method: "importance_times_level"
