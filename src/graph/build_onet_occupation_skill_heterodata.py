@@ -198,7 +198,7 @@ def main():
 
     # resolve paths
     input_dir = resolve_project_path(config["paths"]["featured_tables_dir"])
-    output_dir = resolve_project_path(config["paths"]["processed_graphs_dir"])
+    output_dir = resolve_project_path(config["paths"]["graph_dir"])
 
     # load tables
     occupation_nodes, skill_nodes, occupation_skill_edges = load_featured_tables(input_dir)
