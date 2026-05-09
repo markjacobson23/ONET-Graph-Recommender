@@ -23,6 +23,18 @@ DESCRIPTOR_CONFIGS = {
         "feature_prefix": "knowledge",
         "feature_count_name": "knowledge"
     },
+    "ability": {
+        "source_table": "abilities",
+        "node_type": "ability",
+        "idx_col": "ability_idx",
+        "id_col": "ability_id",
+        "name_col": "ability_name",
+        "node_filename": "ability_nodes.csv",
+        "edge_filename": "occupation_ability_edges.csv",
+        "relation_name": "requires_ability",
+        "feature_prefix": "ability",
+        "feature_count_name": "abilities",
+    },
 }
 
 ALLOWED_DESCRIPTOR_TABLES = {
