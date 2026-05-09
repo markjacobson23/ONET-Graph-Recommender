@@ -8,6 +8,8 @@ DESCRIPTOR_CONFIGS = {
         "node_filename": "skill_nodes.csv",
         "edge_filename": "occupation_skill_edges.csv",
         "relation_name": "requires_skill",
+        "feature_prefix": "skill",
+        "feature_count_name": "skills",
     },
     "knowledge": {
         "source_table": "knowledge",
@@ -18,6 +20,8 @@ DESCRIPTOR_CONFIGS = {
         "node_filename": "knowledge_nodes.csv",
         "edge_filename": "occupation_knowledge_edges.csv",
         "relation_name": "requires_knowledge",
+        "feature_prefix": "knowledge",
+        "feature_count_name": "knowledge"
     },
 }
 

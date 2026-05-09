@@ -1,25 +1,28 @@
 from src.utils.config import resolve_project_path, load_config
 
 from src.etl.onet_occupation_descriptors.configs import DESCRIPTOR_CONFIGS
-from src.etl.onet_occupation_descriptors.loader import (
+from src.etl.onet_occupation_descriptors.base.loader import (
     load_descriptor_rows,
     load_occupation_rows,
     load_occupation_descriptor_edge_rows,
 )
-from src.etl.onet_occupation_descriptors.nodes import (
+from src.etl.onet_occupation_descriptors.base.nodes import (
     build_occupation_nodes,
     build_descriptor_nodes,
-    save_descriptor_nodes,
-    save_occupation_nodes,
 )
-from src.etl.onet_occupation_descriptors.edges import (
+from src.etl.onet_occupation_descriptors.base.edges import (
     build_occupation_descriptor_edges,
-    save_occupation_descriptor_edges,
 )
-from src.etl.onet_occupation_descriptors.verify import (
+from src.etl.onet_occupation_descriptors.base.verify import (
     verify_descriptor_nodes,
     verify_occupation_nodes,
     verify_occupation_descriptor_edges,
+)
+
+from src.etl.onet_occupation_descriptors.io import (
+    save_occupation_nodes,
+    save_descriptor_nodes,
+    save_occupation_descriptor_edges,
 )
 
 def main():
@@ -45,7 +48,7 @@ def main():
     # loop through descriptor configs and build, verify, and save node and edge tables
     for descriptor_name, descriptor_config in DESCRIPTOR_CONFIGS.items():
 
-        print(f"Building {descriptor_name} tables...")
+        print(f"Building {descriptor_name} base-tables...")
 
         # build, verify, and save descriptor nodes
         descriptor_rows = load_descriptor_rows(db_path, descriptor_config["source_table"])
@@ -78,7 +81,7 @@ def main():
         # append successes to success string
         success_string += f"- {descriptor_config['node_filename']}\n"
         success_string += f"- {descriptor_config['edge_filename']}\n"
-        
+
     print(success_string)
 
 if __name__ == "__main__":

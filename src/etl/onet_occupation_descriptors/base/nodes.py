@@ -41,10 +41,4 @@ def build_descriptor_nodes(descriptor_rows, descriptor_config):
 
     return descriptor_nodes
 
-def save_occupation_nodes(occupation_nodes, output_dir):
-    output_dir.mkdir(parents=True, exist_ok=True)
-    occupation_nodes.to_csv(output_dir / "occupation_nodes.csv", index=False)
 
-def save_descriptor_nodes(descriptor_nodes, output_dir, filename):
-    output_dir.mkdir(parents=True, exist_ok=True)
-    descriptor_nodes.to_csv(output_dir / filename, index=False)

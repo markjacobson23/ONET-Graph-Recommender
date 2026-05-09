@@ -34,7 +34,3 @@ def build_occupation_descriptor_edges(
     )
 
     return occupation_descriptor_edges
-
-def save_occupation_descriptor_edges(occupation_descriptor_edges, output_dir, filename):
-    output_dir.mkdir(parents=True, exist_ok=True)
-    occupation_descriptor_edges.to_csv(output_dir / filename, index=False)
