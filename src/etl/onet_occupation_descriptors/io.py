@@ -2,16 +2,12 @@ import pandas as pd
 from pathlib import Path
 
 
-def save_occupation_descriptor_edges(occupation_descriptor_edges: pd.DataFrame , output_dir: Path, filename: str):
+def load_csv_df(base_dir: Path, filename: str) -> pd.DataFrame:
+    """Load a CSV file from a directory into a DataFrame."""
+    return pd.read_csv(base_dir / filename)
+
+
+def save_csv_df(df: pd.DataFrame, output_dir: Path, filename: str) -> None:
+    """Save a DataFrame to a CSV file."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    occupation_descriptor_edges.to_csv(output_dir / filename, index=False)
-
-def save_occupation_nodes(occupation_nodes: pd.DataFrame, output_dir: Path):
-    output_dir.mkdir(parents=True, exist_ok=True)
-    occupation_nodes.to_csv(output_dir / "occupation_nodes.csv", index=False)
-
-def save_descriptor_nodes(descriptor_nodes: pd.DataFrame, output_dir: Path, filename: str):
-    output_dir.mkdir(parents=True, exist_ok=True)
-    descriptor_nodes.to_csv(output_dir / filename, index=False)
-
-
+    df.to_csv(output_dir / filename, index=False)

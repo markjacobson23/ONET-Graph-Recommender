@@ -19,11 +19,8 @@ from src.etl.onet_occupation_descriptors.base.verify import (
     verify_occupation_descriptor_edges,
 )
 
-from src.etl.onet_occupation_descriptors.io import (
-    save_occupation_nodes,
-    save_descriptor_nodes,
-    save_occupation_descriptor_edges,
-)
+from src.etl.onet_occupation_descriptors.configs import OCCUPATION_CONFIG
+from src.etl.onet_occupation_descriptors.io import save_csv_df
 
 def main():
 
@@ -46,11 +43,11 @@ def main():
     occupation_rows = load_occupation_rows(db_path)
     occupation_nodes = build_occupation_nodes(occupation_rows)
     verify_occupation_nodes(occupation_rows, occupation_nodes)
-    save_occupation_nodes(occupation_nodes, base_nodes_dir)
+    save_csv_df(occupation_nodes, base_nodes_dir, OCCUPATION_CONFIG["node_filename"])
 
     # initialize success string
     success_string = f"Successfully built the following tables:\n"
-    success_string += "- occupation_nodes.csv\n"
+    success_string += f"- {OCCUPATION_CONFIG['node_filename']}\n"
 
     # loop through descriptor configs and build, verify, and save node and edge tables
     for descriptor_name, descriptor_config in DESCRIPTOR_CONFIGS.items():
@@ -61,7 +58,7 @@ def main():
         descriptor_rows = load_descriptor_rows(db_path, descriptor_config["source_table"])
         descriptor_nodes = build_descriptor_nodes(descriptor_rows, descriptor_config)
         verify_descriptor_nodes(descriptor_rows, descriptor_nodes, descriptor_config)
-        save_descriptor_nodes(descriptor_nodes, base_nodes_dir, descriptor_config["node_filename"])
+        save_csv_df(descriptor_nodes, base_nodes_dir, descriptor_config["node_filename"])
 
         # load occupation-descriptor edge rows
         occupation_descriptor_edge_rows = load_occupation_descriptor_edge_rows(
@@ -85,11 +82,7 @@ def main():
         )
 
         # save occupation-descriptor edge table
-        save_occupation_descriptor_edges(
-            occupation_descriptor_edges,
-            base_edges_dir,
-            descriptor_config["edge_filename"]
-        )
+        save_csv_df(occupation_descriptor_edges, base_edges_dir, descriptor_config["edge_filename"])
 
         # append successes to success string
         success_string += f"- {descriptor_config['node_filename']}\n"
@@ -99,7 +92,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 

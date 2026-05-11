@@ -1,4 +1,12 @@
 
+OCCUPATION_CONFIG = {
+    "node_filename": "occupation_nodes.csv",
+    "idx_col": "occupation_idx",
+    "id_col": "onetsoc_code",
+    "name_col": "occupation_title",
+    "metadata_cols": ["occupation_idx", "onetsoc_code", "occupation_title"],
+}
+
 DESCRIPTOR_CONFIGS = {
     "skill": {
         "source_table": "skills",

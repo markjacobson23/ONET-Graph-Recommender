@@ -1,23 +1,17 @@
-from src.etl.onet_occupation_descriptors.configs import DESCRIPTOR_CONFIGS
+from src.etl.onet_occupation_descriptors.configs import (
+    DESCRIPTOR_CONFIGS,
+    OCCUPATION_CONFIG,
+)
 from src.etl.onet_occupation_descriptors.schema import (
     OCCUPATION_NODE_SCHEMA,
     get_descriptor_node_schema,
 )
-from src.etl.onet_occupation_descriptors.io import (
-    save_occupation_nodes,
-    save_descriptor_nodes,
-    save_occupation_descriptor_edges,
-)
+from src.etl.onet_occupation_descriptors.io import load_csv_df, save_csv_df
 from src.etl.onet_occupation_descriptors.featured.features import (
     attach_features_to_nodes,
     build_descriptor_features,
     build_occupation_descriptor_features,
     fill_missing_feature_values,
-)
-from src.etl.onet_occupation_descriptors.featured.loader import (
-    load_descriptor_nodes,
-    load_occupation_descriptor_edges,
-    load_occupation_nodes,
 )
 from src.etl.onet_occupation_descriptors.featured.verify import (
     verify_featured_nodes,
@@ -43,7 +37,7 @@ def main():
     featured_edges_dir = resolve_project_path(path_config["paths"]["featured_edges_dir"])
 
     # load and copy base occupation nodes
-    base_occupation_nodes = load_occupation_nodes(base_nodes_dir)
+    base_occupation_nodes = load_csv_df(base_nodes_dir, OCCUPATION_CONFIG["node_filename"])
     featured_occupation_nodes = base_occupation_nodes.copy()
 
     # initialize success string
@@ -57,16 +51,10 @@ def main():
         descriptor_node_schema = get_descriptor_node_schema(descriptor_config)
 
         # load descriptor nodes
-        base_descriptor_nodes = load_descriptor_nodes(
-            base_nodes_dir,
-            descriptor_config,
-        )
+        base_descriptor_nodes = load_csv_df(base_nodes_dir, descriptor_config["node_filename"])
 
         # load occupation-descriptor edges
-        occupation_descriptor_edges = load_occupation_descriptor_edges(
-            base_edges_dir,
-            descriptor_config,
-        )
+        occupation_descriptor_edges = load_csv_df(base_edges_dir, descriptor_config["edge_filename"])
 
         # build occupation features
         occupation_features = build_occupation_descriptor_features(
@@ -108,19 +96,11 @@ def main():
         )
 
         # save the descriptor node table
-        save_descriptor_nodes(
-            featured_descriptor_nodes,
-            featured_nodes_dir,
-            descriptor_config["node_filename"],
-        )
+        save_csv_df(featured_descriptor_nodes, featured_nodes_dir, descriptor_config["node_filename"])
 
         # save the occupation-descriptor edge table
         # (same as base edge table so no extra verify)
-        save_occupation_descriptor_edges(
-            occupation_descriptor_edges,
-            featured_edges_dir,
-            descriptor_config["edge_filename"],
-        )
+        save_csv_df(occupation_descriptor_edges, featured_edges_dir, descriptor_config["edge_filename"])
 
         # append successes to success string
         success_string += f"- {descriptor_config['node_filename']}\n"
@@ -140,18 +120,14 @@ def main():
     )
 
     # save the occupation node table
-    save_occupation_nodes(
-        featured_occupation_nodes,
-        featured_nodes_dir,
-    )
+    save_csv_df(featured_occupation_nodes, featured_nodes_dir, OCCUPATION_CONFIG["node_filename"])
 
-    success_string += "- occupation_nodes.csv\n"
+    success_string += f"- {OCCUPATION_CONFIG['node_filename']}\n"
     print(success_string)
 
 
 if __name__ == "__main__":
     main()
-
 
 
 
