@@ -23,7 +23,6 @@ from src.etl.onet_occupation_descriptors.configs import OCCUPATION_CONFIG
 from src.etl.onet_occupation_descriptors.io import save_csv_df
 
 def main():
-
     """
     Builds the base tables for the occupation-descriptor graph data.
        - base/occupation_nodes.csv
@@ -39,50 +38,97 @@ def main():
     base_nodes_dir = resolve_project_path(path_config["paths"]["base_nodes_dir"])
     base_edges_dir = resolve_project_path(path_config["paths"]["base_edges_dir"])
 
+    # load occupation-descriptor edge rows once and determine valid occupations
+    occupation_descriptor_edge_rows_by_type = {}
+    valid_onetsoc_codes = None
+
+    for descriptor_name, descriptor_config in DESCRIPTOR_CONFIGS.items():
+        occupation_descriptor_edge_rows = load_occupation_descriptor_edge_rows(
+            db_path,
+            descriptor_config["source_table"],
+        )
+
+        occupation_descriptor_edge_rows_by_type[descriptor_name] = (
+            occupation_descriptor_edge_rows
+        )
+
+        descriptor_onetsoc_codes = set(
+            occupation_descriptor_edge_rows["onetsoc_code"].unique()
+        )
+
+        if valid_onetsoc_codes is None:
+            valid_onetsoc_codes = descriptor_onetsoc_codes
+        else:
+            valid_onetsoc_codes &= descriptor_onetsoc_codes
+
     # build, verify, and save occupation nodes
     occupation_rows = load_occupation_rows(db_path)
+
+    occupation_rows = occupation_rows[
+        occupation_rows["onetsoc_code"].isin(valid_onetsoc_codes)
+    ].copy()
+
     occupation_nodes = build_occupation_nodes(occupation_rows)
     verify_occupation_nodes(occupation_rows, occupation_nodes)
     save_csv_df(occupation_nodes, base_nodes_dir, OCCUPATION_CONFIG["node_filename"])
 
     # initialize success string
-    success_string = f"Successfully built the following tables:\n"
+    success_string = "Successfully built the following tables:\n"
     success_string += f"- {OCCUPATION_CONFIG['node_filename']}\n"
 
     # loop through descriptor configs and build, verify, and save node and edge tables
     for descriptor_name, descriptor_config in DESCRIPTOR_CONFIGS.items():
-
         print(f"Building {descriptor_name} base-tables...")
 
         # build, verify, and save descriptor nodes
-        descriptor_rows = load_descriptor_rows(db_path, descriptor_config["source_table"])
-        descriptor_nodes = build_descriptor_nodes(descriptor_rows, descriptor_config)
-        verify_descriptor_nodes(descriptor_rows, descriptor_nodes, descriptor_config)
-        save_csv_df(descriptor_nodes, base_nodes_dir, descriptor_config["node_filename"])
-
-        # load occupation-descriptor edge rows
-        occupation_descriptor_edge_rows = load_occupation_descriptor_edge_rows(
+        descriptor_rows = load_descriptor_rows(
             db_path,
-            descriptor_config["source_table"]
+            descriptor_config["source_table"],
         )
+
+        descriptor_nodes = build_descriptor_nodes(
+            descriptor_rows,
+            descriptor_config,
+        )
+
+        verify_descriptor_nodes(
+            descriptor_rows,
+            descriptor_nodes,
+            descriptor_config,
+        )
+
+        save_csv_df(
+            descriptor_nodes,
+            base_nodes_dir,
+            descriptor_config["node_filename"],
+        )
+
+        # use cached occupation-descriptor edge rows
+        occupation_descriptor_edge_rows = occupation_descriptor_edge_rows_by_type[
+            descriptor_name
+        ]
 
         # build occupation-descriptor edge table
         occupation_descriptor_edges = build_occupation_descriptor_edges(
             occupation_descriptor_edge_rows,
             occupation_nodes,
             descriptor_nodes,
-            descriptor_config
+            descriptor_config,
         )
 
-        #verify occupation-descriptor edge table is valid
+        # verify occupation-descriptor edge table is valid
         verify_occupation_descriptor_edges(
             occupation_descriptor_edge_rows,
             occupation_descriptor_edges,
-            descriptor_config
+            descriptor_config,
         )
 
         # save occupation-descriptor edge table
-        save_csv_df(occupation_descriptor_edges, base_edges_dir, descriptor_config["edge_filename"])
+        save_csv_df(
+            occupation_descriptor_edges,
+            base_edges_dir,
+            descriptor_config["edge_filename"],
+        )
 
         # append successes to success string
         success_string += f"- {descriptor_config['node_filename']}\n"
