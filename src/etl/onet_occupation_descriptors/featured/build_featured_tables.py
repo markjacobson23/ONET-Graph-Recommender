@@ -3,8 +3,7 @@ from src.etl.onet_occupation_descriptors.configs import (
     OCCUPATION_CONFIG,
 )
 from src.etl.onet_occupation_descriptors.schema import (
-    OCCUPATION_NODE_SCHEMA,
-    get_descriptor_node_schema,
+    get_node_schema,
 )
 from src.etl.onet_occupation_descriptors.io import load_csv_df, save_csv_df
 from src.etl.onet_occupation_descriptors.featured.features import (
@@ -48,7 +47,7 @@ def main():
         print(f"Building {descriptor_name} featured-tables...")
 
         # get descriptor node schema
-        descriptor_node_schema = get_descriptor_node_schema(descriptor_config)
+        descriptor_node_schema = get_node_schema(descriptor_config)
 
         # load descriptor nodes
         base_descriptor_nodes = load_csv_df(base_nodes_dir, descriptor_config["node_filename"])
@@ -66,7 +65,7 @@ def main():
         featured_occupation_nodes = attach_features_to_nodes(
             featured_occupation_nodes,
             occupation_features,
-            OCCUPATION_NODE_SCHEMA["idx_col"],
+            get_node_schema(OCCUPATION_CONFIG)["idx_col"],
         )
 
         # build descriptor features
@@ -109,14 +108,14 @@ def main():
     # fill missing occupation feature values with 0
     featured_occupation_nodes = fill_missing_feature_values(
         featured_occupation_nodes,
-        OCCUPATION_NODE_SCHEMA["metadata_cols"],
+        get_node_schema(OCCUPATION_CONFIG)["metadata_cols"],
     )
 
     # verify that the occupation node table is as expected
     verify_featured_nodes(
         base_occupation_nodes,
         featured_occupation_nodes,
-        OCCUPATION_NODE_SCHEMA,
+        get_node_schema(OCCUPATION_CONFIG),
     )
 
     # save the occupation node table

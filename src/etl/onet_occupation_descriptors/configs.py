@@ -4,7 +4,7 @@ OCCUPATION_CONFIG = {
     "idx_col": "occupation_idx",
     "id_col": "onetsoc_code",
     "name_col": "occupation_title",
-    "metadata_cols": ["occupation_idx", "onetsoc_code", "occupation_title"],
+    "node_type": "occupation",
 }
 
 DESCRIPTOR_CONFIGS = {

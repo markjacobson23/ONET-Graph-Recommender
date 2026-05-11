@@ -1,20 +1,13 @@
-OCCUPATION_NODE_SCHEMA = {
-    "idx_col": "occupation_idx",
-    "id_col": "onetsoc_code",
-    "name_col": "occupation_title",
-    "metadata_cols": ["occupation_idx", "onetsoc_code", "occupation_title"],
-}
-
-
-def get_descriptor_node_schema(descriptor_config: dict) -> dict:
-    """Get the corresponding node schema for a given descriptor config."""
+def get_node_schema(node_config: dict) -> dict:
+    """Get the corresponding node schema for a given node config."""
     return {
-        "idx_col": descriptor_config["idx_col"],
-        "id_col": descriptor_config["id_col"],
-        "name_col": descriptor_config["name_col"],
+        "idx_col": node_config["idx_col"],
+        "id_col": node_config["id_col"],
+        "name_col": node_config["name_col"],
+        "node_type": node_config["node_type"],
         "metadata_cols": [
-            descriptor_config["idx_col"],
-            descriptor_config["id_col"],
-            descriptor_config["name_col"],
+            node_config["idx_col"],
+            node_config["id_col"],
+            node_config["name_col"],
         ],
     }
