@@ -6,7 +6,8 @@ OCCUPATION_NODE_SCHEMA = {
 }
 
 
-def get_descriptor_node_schema(descriptor_config):
+def get_descriptor_node_schema(descriptor_config: dict) -> dict:
+    """Get the corresponding node schema for a given descriptor config."""
     return {
         "idx_col": descriptor_config["idx_col"],
         "id_col": descriptor_config["id_col"],

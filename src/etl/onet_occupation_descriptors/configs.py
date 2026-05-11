@@ -1,3 +1,4 @@
+
 DESCRIPTOR_CONFIGS = {
     "skill": {
         "source_table": "skills",

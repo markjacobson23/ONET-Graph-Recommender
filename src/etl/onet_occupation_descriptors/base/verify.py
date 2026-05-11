@@ -1,17 +1,23 @@
+import pandas as pd
+
 
 def verify_occupation_nodes(
-    occupation_rows,
-    occupation_nodes,
+    occupation_rows: pd.DataFrame,
+    occupation_nodes: pd.DataFrame,
 ):
+    """Verify that the occupation nodes table has the correct number of rows."""
+
     assert len(occupation_nodes) == occupation_rows["onetsoc_code"].nunique(), (
         "Occupation node count does not match unique occupations in source data"
     )
 
 def verify_descriptor_nodes(
-    descriptor_rows,
-    descriptor_nodes,
-    descriptor_config,
+    descriptor_rows: pd.DataFrame,
+    descriptor_nodes: pd.DataFrame,
+    descriptor_config: dict,
 ):
+    """Verify that the descriptor nodes table has the correct number of rows."""
+
     descriptor_name = descriptor_config["node_type"]
 
     assert len(descriptor_nodes) == descriptor_rows["descriptor_id"].nunique(), (
@@ -19,13 +25,14 @@ def verify_descriptor_nodes(
     )
 
 def verify_occupation_descriptor_edges(
-    occupation_descriptor_edge_rows,
-    descriptor_edges,
-    descriptor_config
+    occupation_descriptor_edge_rows: pd.DataFrame,
+    descriptor_edges: pd.DataFrame,
+    descriptor_config: dict,
 ):
+    """Verify that the occupation-descriptor edges table has a valid number of rows,
+     no duplicates, no missing values, and valid importance and level values."""
 
     descriptor_name = descriptor_config["node_type"]
-    id_col = descriptor_config["id_col"]
     idx_col = descriptor_config["idx_col"]
 
     assert len(descriptor_edges) == len(occupation_descriptor_edge_rows), (

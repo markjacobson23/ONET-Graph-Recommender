@@ -1,4 +1,11 @@
-def verify_featured_nodes(base_nodes, featured_nodes, node_schema):
+import pandas as pd
+
+
+def verify_featured_nodes(base_nodes: pd.DataFrame, featured_nodes: pd.DataFrame, node_schema: dict):
+
+    """Verify that the featured nodes table has a valid number of rows,
+      no missing values, and proper feature columns."""
+
     idx_col = node_schema["idx_col"]
     metadata_cols = node_schema["metadata_cols"]
 
@@ -19,18 +26,14 @@ def verify_featured_nodes(base_nodes, featured_nodes, node_schema):
         if col not in metadata_cols
     ]
 
-
-    # check that the feature columns are present in the tables
     assert len(feature_cols) > 0, (
         "No feature columns found"
     )
 
-    # check that the feature columns have values
     assert featured_nodes[feature_cols].notna().all().all(), (
         "Missing numeric feature values in node table"
     )
 
-    # check that the feature columns have the correct data types
     assert all(
         featured_nodes[col].dtype.kind in "iuf"
         for col in feature_cols

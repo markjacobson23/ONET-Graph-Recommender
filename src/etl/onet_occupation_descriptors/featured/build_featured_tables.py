@@ -26,6 +26,13 @@ from src.utils.config import load_config, resolve_project_path
 
 
 def main():
+    """
+        Builds the featured tables for the occupation-descriptor graph data.
+           - featured/occupation_nodes.csv
+           - featured/descriptor_nodes.csv <- one for each descriptor
+           - featured/occupation_descriptor_edges.csv
+        """
+
     # load config dict
     path_config = load_config()
 

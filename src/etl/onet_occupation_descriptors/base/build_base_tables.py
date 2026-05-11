@@ -27,6 +27,13 @@ from src.etl.onet_occupation_descriptors.io import (
 
 def main():
 
+    """
+    Builds the base tables for the occupation-descriptor graph data.
+       - base/occupation_nodes.csv
+       - base/descriptor_nodes.csv <- one for each descriptor
+       - base/occupation_descriptor_edges.csv
+    """
+
     # load config dict
     path_config = load_config()
 
@@ -56,22 +63,28 @@ def main():
         verify_descriptor_nodes(descriptor_rows, descriptor_nodes, descriptor_config)
         save_descriptor_nodes(descriptor_nodes, base_nodes_dir, descriptor_config["node_filename"])
 
-        # build, verify, and save occupation-descriptor edges
+        # load occupation-descriptor edge rows
         occupation_descriptor_edge_rows = load_occupation_descriptor_edge_rows(
             db_path,
             descriptor_config["source_table"]
         )
+
+        # build occupation-descriptor edge table
         occupation_descriptor_edges = build_occupation_descriptor_edges(
             occupation_descriptor_edge_rows,
             occupation_nodes,
             descriptor_nodes,
             descriptor_config
         )
+
+        #verify occupation-descriptor edge table is valid
         verify_occupation_descriptor_edges(
             occupation_descriptor_edge_rows,
             occupation_descriptor_edges,
             descriptor_config
         )
+
+        # save occupation-descriptor edge table
         save_occupation_descriptor_edges(
             occupation_descriptor_edges,
             base_edges_dir,
