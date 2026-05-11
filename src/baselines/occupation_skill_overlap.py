@@ -3,22 +3,17 @@ import json
 from pathlib import Path
 from src.utils.config import load_config, resolve_project_path
 
-def load_featured_tables(input_dir) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    occupation_nodes = pd.read_csv(input_dir / "featured_occupation_nodes.csv")
-    skill_nodes = pd.read_csv(input_dir / "featured_skill_nodes.csv")
-    occupation_skill_edges = pd.read_csv(input_dir / "occupation_skill_edges.csv")
-    return occupation_nodes, skill_nodes, occupation_skill_edges
 
-def load_candidate_profile(profile_path):
+def load_candidate_profile(profile_path: Path):
     with open(profile_path, "r") as file:
         data = json.load(file)
         return data["candidate_id"], data["candidate_name"], data["skills"]
 
-def normalize_skill_name(name):
+def normalize_skill_name(name: str):
     return name.strip().lower()
 
 
-def match_candidate_skills(candidate_skills, skill_nodes):
+def match_candidate_skills(candidate_skills: list, skill_nodes: pd.DataFrame):
 
     skill_name_to_idx = {
         row["skill_name"].strip().lower(): row["skill_idx"]
@@ -158,9 +153,8 @@ def main():
     config = load_config()
 
     # resolve paths
-    featured_tables_dir = resolve_project_path(
-        config["paths"]["featured_tables_dir"]
-    )
+    featured_nodes_dir = resolve_project_path(config["paths"]["featured_nodes_dir"])
+    featured_edges_dir = resolve_project_path(config["paths"]["featured_edges_dir"])
     candidate_profile_path = resolve_project_path(
         Path(config["paths"]["profiles_dir"])
         / config["profiles"]["default_candidate_profile"]
@@ -169,7 +163,9 @@ def main():
 
 
     # load featured tables
-    occupation_nodes, skill_nodes, occupation_skill_edges = load_featured_tables(featured_tables_dir)
+    occupation_nodes = pd.read_csv(featured_nodes_dir / "occupation_nodes.csv")
+    skill_nodes = pd.read_csv(featured_nodes_dir / "skill_nodes.csv")
+    occupation_skill_edges = pd.read_csv(featured_edges_dir / "occupation_skill_edges.csv")
 
     candidate_id, candidate_name, candidate_skills = load_candidate_profile(candidate_profile_path)
 
