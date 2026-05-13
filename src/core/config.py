@@ -1,11 +1,14 @@
 from pathlib import Path
-import yaml
 from typing import Any
+
+import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+
 def load_config(config_path: str | Path = "configs/default.yaml") -> dict[str, Any]:
-    # Load configuration from a YAML file
+    """Load the project configuration from YAML."""
+
     config_path = Path(config_path)
 
     if not config_path.is_absolute():
@@ -24,7 +27,8 @@ def load_config(config_path: str | Path = "configs/default.yaml") -> dict[str, A
 
 
 def resolve_project_path(path: str | Path) -> Path:
-    # Resolve a path relative to the project root
+    """Resolve a path relative to the repository root."""
+
     path = Path(path)
 
     if path.is_absolute():
