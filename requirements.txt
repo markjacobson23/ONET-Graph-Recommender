@@ -1,4 +1,5 @@
 pandas
+matplotlib
 torch
 torch-geometric
 PyYAML
