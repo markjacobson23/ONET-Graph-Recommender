@@ -1,26 +1,26 @@
-from src.utils.config import resolve_project_path, load_config
+from src.core.config import resolve_project_path, load_config
 
-from src.etl.onet_occupation_descriptors.configs import DESCRIPTOR_CONFIGS
-from src.etl.onet_occupation_descriptors.base.loader import (
+from src.data.onet.descriptors.configs import DESCRIPTOR_CONFIGS
+from src.data.onet.descriptors.base.loader import (
     load_descriptor_rows,
     load_occupation_rows,
     load_occupation_descriptor_edge_rows,
 )
-from src.etl.onet_occupation_descriptors.base.nodes import (
+from src.data.onet.descriptors.base.nodes import (
     build_occupation_nodes,
     build_descriptor_nodes,
 )
-from src.etl.onet_occupation_descriptors.base.edges import (
+from src.data.onet.descriptors.base.edges import (
     build_occupation_descriptor_edges,
 )
-from src.etl.onet_occupation_descriptors.base.verify import (
+from src.data.onet.descriptors.base.verify import (
     verify_descriptor_nodes,
     verify_occupation_nodes,
     verify_occupation_descriptor_edges,
 )
 
-from src.etl.onet_occupation_descriptors.configs import OCCUPATION_CONFIG
-from src.etl.onet_occupation_descriptors.io import save_csv_df
+from src.data.onet.descriptors.configs import OCCUPATION_CONFIG
+from src.data.onet.descriptors.io import save_csv_df
 
 def main():
     """

@@ -24,7 +24,7 @@ def build_occupation_descriptor_edges(
                     [descriptor_idx, descriptor_id, descriptor_name]
 
             descriptor_config: descriptor configuration parameters.
-                    [see src/etl/onet_occupation_descriptors/configs.py for details]
+                    [see src/data/onet/configs.py for details]
 
         Returns:
             occupation_descriptor_edges: the refined occupation-descriptor edges table.

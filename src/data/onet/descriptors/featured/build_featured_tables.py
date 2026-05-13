@@ -1,21 +1,21 @@
-from src.etl.onet_occupation_descriptors.configs import (
+from src.data.onet.descriptors.configs import (
     DESCRIPTOR_CONFIGS,
     OCCUPATION_CONFIG,
 )
-from src.etl.onet_occupation_descriptors.schema import (
+from src.data.onet.descriptors.schema import (
     get_node_schema,
 )
-from src.etl.onet_occupation_descriptors.io import load_csv_df, save_csv_df
-from src.etl.onet_occupation_descriptors.featured.features import (
+from src.data.onet.descriptors.io import load_csv_df, save_csv_df
+from src.data.onet.descriptors.featured.features import (
     attach_features_to_nodes,
     build_descriptor_features,
     build_occupation_descriptor_features,
     fill_missing_feature_values,
 )
-from src.etl.onet_occupation_descriptors.featured.verify import (
+from src.data.onet.descriptors.featured.verify import (
     verify_featured_nodes,
 )
-from src.utils.config import load_config, resolve_project_path
+from src.core.config import load_config, resolve_project_path
 
 
 def main():

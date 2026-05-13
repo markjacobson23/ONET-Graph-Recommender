@@ -267,8 +267,8 @@ To add a new O*NET descriptor table with the same `importance` / `level` pattern
 Example:
 
 ```bash
-python3 -m src.etl.onet_occupation_descriptors.base.build_base_tables
-python3 -m src.etl.onet_occupation_descriptors.featured.build_feature_tables
+python3 -m src.data.onet.base.build_base_tables
+python3 -m src.data.onet.featured.build_feature_tables
 python3 -m src.graph.build_onet_heterodata
 ```
 

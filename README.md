@@ -211,8 +211,8 @@ Each descriptor config defines:
 Run commands from the project root.
 
 ```bash
-python3 -m src.etl.onet_occupation_descriptors.base.build_base_tables
-python3 -m src.etl.onet_occupation_descriptors.featured.build_feature_tables
+python3 -m src.data.onet.base.build_base_tables
+python3 -m src.data.onet.featured.build_feature_tables
 python3 -m src.graph.build_onet_heterodata
 python3 -m src.baselines.occupation_skill_overlap
 ```

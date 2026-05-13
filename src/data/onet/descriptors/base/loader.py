@@ -1,6 +1,6 @@
 import pandas as pd
 import sqlite3
-from src.etl.onet_occupation_descriptors.configs import ALLOWED_DESCRIPTOR_TABLES
+from src.data.onet.descriptors.configs import ALLOWED_DESCRIPTOR_TABLES
 from pathlib import Path
 def load_occupation_rows(db_path: Path) -> pd.DataFrame:
     """Load occupation data rows from the SQLite database."""

@@ -5,12 +5,12 @@ import pandas as pd
 import torch
 from torch_geometric.data import HeteroData
 
-from src.etl.onet_occupation_descriptors.configs import (
+from src.data.onet.descriptors.configs import (
     DESCRIPTOR_CONFIGS,
     OCCUPATION_CONFIG,
 )
-from src.etl.onet_occupation_descriptors.schema import get_node_schema
-from src.utils.config import load_config, resolve_project_path
+from src.data.onet.descriptors.schema import get_node_schema
+from src.core.config import load_config, resolve_project_path
 
 
 EDGE_ATTR_COLS = ["importance", "level"]
@@ -253,20 +253,41 @@ def add_edge_to_heterodata(
 
     return data
 
+def filter_edge_table(
+    edge_table: pd.DataFrame,
+    graph_variant: str,
+) -> pd.DataFrame:
+    if graph_variant == "dense":
+        return edge_table.copy()
 
-def save_heterodata(data: HeteroData, output_dir: Path) -> None:
+    if graph_variant == "core_broad":
+        return edge_table[
+            (edge_table["importance"] >= 4.0)
+            | (edge_table["level"] >= 5.0)
+        ].copy()
+
+    if graph_variant == "core_strict":
+        return edge_table[
+            (edge_table["importance"] >= 4.0)
+            & (edge_table["level"] >= 5.0)
+        ].copy()
+
+    raise ValueError(f"Unknown graph variant: {graph_variant}")
+
+
+def save_heterodata(data: HeteroData, output_dir: Path, graph_variant: str) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    torch.save(data, output_dir / "heterodata.pt")
+    torch.save(data, output_dir / f"{graph_variant}_heterodata.pt")
 
 
-def save_metadata(metadata: dict, output_dir: Path) -> None:
+def save_metadata(metadata: dict, output_dir: Path, graph_variant: str) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    with open(output_dir / "metadata.json", "w") as f:
+    with open(output_dir / f"{graph_variant}_metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
 
 
-def main():
+def build_graph(graph_variant: str = "dense"):
     """Build a heterogeneous graph from the featured occupation and descriptor tables."""
 
     config = load_config()
@@ -325,6 +346,11 @@ def main():
             featured_edges_dir / descriptor_config["edge_filename"]
         )
 
+        occupation_descriptor_edges = filter_edge_table(
+            occupation_descriptor_edges,
+            graph_variant=graph_variant,
+        )
+
         edge_tables_by_type[descriptor_name] = occupation_descriptor_edges
 
         edge_index, edge_attr = build_edge_tensor(
@@ -354,11 +380,16 @@ def main():
 
     print(data)
 
-    save_heterodata(data, processed_graphs_dir)
-    save_metadata(metadata, processed_graphs_dir)
+    save_heterodata(data, processed_graphs_dir, graph_variant=graph_variant)
+    save_metadata(metadata, processed_graphs_dir, graph_variant=graph_variant)
 
-    print("HeteroData graph and metadata saved successfully.")
+    print(f"{graph_variant} HeteroData graph and metadata saved successfully.")
 
+
+def main():
+    build_graph(graph_variant="dense")
+    build_graph(graph_variant="core_broad")
+    build_graph(graph_variant="core_strict")
 
 if __name__ == "__main__":
     main()
