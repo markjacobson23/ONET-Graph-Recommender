@@ -1,20 +1,23 @@
+from __future__ import annotations
+
 import torch
-from torch_geometric.nn import HeteroConv, TransformerConv
 import torch.nn.functional as F
+from torch_geometric.nn import HeteroConv, TransformerConv
 
 
 class HeteroTransformerClassifier(torch.nn.Module):
+    """A heterogeneous TransformerConv classifier for occupations."""
 
     def __init__(
         self,
-        metadata,
-        hidden_channels,
-        out_channels,
-        num_layers=2,
-        heads=2,
-        dropout=0.2,
-        edge_dim=2,
-    ):
+        metadata: tuple[dict, dict],
+        hidden_channels: int,
+        out_channels: int,
+        num_layers: int = 2,
+        heads: int = 2,
+        dropout: float = 0.2,
+        edge_dim: int = 2,
+    ) -> None:
         super().__init__()
 
         self.dropout = dropout
@@ -35,15 +38,18 @@ class HeteroTransformerClassifier(torch.nn.Module):
                 },
                 aggr="sum",
             )
-
             self.convs.append(conv)
 
-        self.classifier = torch.nn.Linear(
-            hidden_channels,
-            out_channels,
-        )
+        self.classifier = torch.nn.Linear(hidden_channels, out_channels)
 
-    def forward(self, x_dict, edge_index_dict, edge_attr_dict):
+    def forward(
+        self,
+        x_dict: dict,
+        edge_index_dict: dict,
+        edge_attr_dict: dict,
+    ) -> torch.Tensor:
+        """Run the hetero Transformer forward pass."""
+
         for conv in self.convs:
             x_dict = conv(
                 x_dict,

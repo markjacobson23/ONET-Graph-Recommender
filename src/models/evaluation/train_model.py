@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import copy
 
 import torch
 import torch.nn.functional as F
+from torch_geometric.data import HeteroData
 
 
 def get_model_logits(
-    model,
-    data,
+    model: torch.nn.Module,
+    data: HeteroData,
     graph_aware: bool,
     edge_aware: bool,
-):
+) -> torch.Tensor:
+    """Run a forward pass with the right argument shape for the model."""
+
     if graph_aware and edge_aware:
         return model(
             data.x_dict,
@@ -28,13 +33,16 @@ def get_model_logits(
 
     return model(data["occupation"].x)
 
+
 def train_one_epoch(
-    model,
-    data,
-    optimizer,
+    model: torch.nn.Module,
+    data: HeteroData,
+    optimizer: torch.optim.Optimizer,
     graph_aware: bool,
     edge_aware: bool,
-):
+) -> float:
+    """Train one epoch on the occupation classification task."""
+
     model.train()
     optimizer.zero_grad()
 
@@ -58,13 +66,16 @@ def train_one_epoch(
 
     return loss.item()
 
+
 @torch.no_grad()
 def evaluate(
-    model,
-    data,
+    model: torch.nn.Module,
+    data: HeteroData,
     graph_aware: bool,
     edge_aware: bool,
-):
+) -> dict[str, float]:
+    """Compute split accuracy for the current model."""
+
     model.eval()
 
     logits = get_model_logits(
@@ -77,29 +88,28 @@ def evaluate(
     predictions = logits.argmax(dim=1)
     y = data["occupation"].y
 
-    results = {}
+    results: dict[str, float] = {}
 
     for split_name in ["train", "val", "test"]:
         mask = data["occupation"][f"{split_name}_mask"]
-
         correct = (predictions[mask] == y[mask]).sum().item()
         total = mask.sum().item()
-
-        accuracy = correct / total if total > 0 else 0.0
-        results[f"{split_name}_accuracy"] = accuracy
+        results[f"{split_name}_accuracy"] = correct / total if total > 0 else 0.0
 
     return results
 
+
 def train_with_early_stopping(
-    model,
-    data,
-    optimizer,
+    model: torch.nn.Module,
+    data: HeteroData,
+    optimizer: torch.optim.Optimizer,
     graph_aware: bool,
     edge_aware: bool,
-    num_epochs=2500,
-    patience=200,
-    print_every=100,
-):
+    num_epochs: int = 2500,
+    patience: int = 200,
+    print_every: int = 100,
+) -> dict[str, object]:
+    """Train until validation accuracy stops improving."""
 
     best_val_accuracy = -1.0
     best_epoch = 0
@@ -144,7 +154,8 @@ def train_with_early_stopping(
             print(f"Early stopping at epoch {epoch}.")
             break
 
-    model.load_state_dict(best_model_state)
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
 
     final_results = evaluate(
         model=model,
@@ -152,7 +163,6 @@ def train_with_early_stopping(
         graph_aware=graph_aware,
         edge_aware=edge_aware,
     )
-
     final_results["best_epoch"] = best_epoch
     final_results["best_val_accuracy"] = best_val_accuracy
 

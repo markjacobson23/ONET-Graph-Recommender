@@ -1,32 +1,39 @@
+from __future__ import annotations
+
+from pathlib import Path
 from statistics import mean, stdev
 
-from src.models.baselines.majority_class import majority_class_baseline
-from src.graph.data import load_heterodata, load_occupation_nodes, \
-    add_occupation_labels, add_train_val_test_masks
 from src.core.config import load_config, resolve_project_path
+from src.graph.data import (
+    add_occupation_labels,
+    add_train_val_test_masks,
+    load_heterodata,
+    load_occupation_nodes,
+)
+from src.models.baselines.majority_class import majority_class_baseline
 from src.models.evaluation.build_model import build_model_and_optimizer
 from src.models.evaluation.train_model import train_with_early_stopping
 
 
-
 def run_seed(
-    seed,
-    graph_path,
-    featured_nodes_dir,
-    model_names,
-):
-    print(f"\n==============================")
+    seed: int,
+    graph_path: Path,
+    featured_nodes_dir: Path,
+    model_names: list[str],
+) -> dict[str, dict[str, object]]:
+    """Run one seed for the baseline and GNN comparison."""
+
+    print("\n==============================")
     print(f"Running seed {seed}")
-    print(f"==============================")
+    print("==============================")
 
     data = load_heterodata(graph_path)
     occupation_nodes = load_occupation_nodes(featured_nodes_dir)
 
-    data, label_to_idx, idx_to_label = add_occupation_labels(
+    data, label_to_idx, _ = add_occupation_labels(
         data,
         occupation_nodes,
     )
-
     data = add_train_val_test_masks(
         data,
         train_ratio=0.7,
@@ -35,13 +42,10 @@ def run_seed(
     )
 
     num_classes = len(label_to_idx)
-
-    seed_results = {}
+    seed_results: dict[str, dict] = {}
 
     print("\nMajority-class baseline")
-
-    majority_results = majority_class_baseline(data)
-    seed_results["majority_class"] = majority_results
+    seed_results["majority_class"] = majority_class_baseline(data)
 
     for model_name in model_names:
         print(f"\nTraining {model_name}...")
@@ -67,7 +71,12 @@ def run_seed(
 
     return seed_results
 
-def summarize_seed_results(all_results):
+
+def summarize_seed_results(
+    all_results: dict[int, dict[str, dict[str, object]]],
+) -> None:
+    """Print mean and standard deviation for each tracked metric."""
+
     model_names = sorted(
         {
             model_name
@@ -97,7 +106,6 @@ def summarize_seed_results(all_results):
 
             metric_mean = mean(values)
             metric_std = stdev(values) if len(values) > 1 else 0.0
-
             print(f"{metric}: {metric_mean:.3f} ± {metric_std:.3f}")
 
         best_epochs = [
@@ -110,14 +118,13 @@ def summarize_seed_results(all_results):
             print(f"best_epoch_mean: {mean(best_epochs):.1f}")
 
 
+def main() -> None:
+    """Run the comparison across graph variants and random seeds."""
 
-def main():
     config = load_config()
-
     processed_graphs_dir = resolve_project_path(
         config["paths"]["processed_graphs_dir"]
     )
-
     featured_nodes_dir = resolve_project_path(
         config["paths"]["featured_nodes_dir"]
     )
@@ -127,9 +134,7 @@ def main():
         "core_broad",
         "core_strict",
     ]
-
     seeds = [0, 1, 2, 3, 4]
-
     model_names = [
         "mlp",
         "hetero_sage",
@@ -144,25 +149,21 @@ def main():
         print("=" * 40)
 
         graph_path = processed_graphs_dir / f"{graph_variant}_heterodata.pt"
-
         all_seed_results = {}
 
         for seed in seeds:
-            seed_results = run_seed(
+            all_seed_results[seed] = run_seed(
                 seed=seed,
                 graph_path=graph_path,
                 featured_nodes_dir=featured_nodes_dir,
                 model_names=model_names,
             )
 
-            all_seed_results[seed] = seed_results
-
         all_variant_results[graph_variant] = all_seed_results
 
         print("\n" + "=" * 40)
         print(f"Summary for graph variant: {graph_variant}")
         print("=" * 40)
-
         summarize_seed_results(all_seed_results)
 
     print("\n" + "=" * 40)
@@ -176,14 +177,5 @@ def main():
         summarize_seed_results(variant_results)
 
 
-
-
-
-
 if __name__ == "__main__":
     main()
-
-
-
-
-
