@@ -88,6 +88,22 @@ data/processed/graphs/
 
 Each graph variant gets a `.pt` graph file and a matching metadata JSON file.
 
+## Results
+
+Current experiment snapshots live in [docs/results.md](/Users/markjacobson/coding/Job_Recommendation_Model/docs/results.md).
+
+The SOC classifier comparison outputs and figures are written under:
+
+```text
+data/processed/results/soc_classifier/
+```
+
+Highlights from the latest comparison run:
+
+- The majority-class baseline is stable but weak.
+- The MLP is the strongest non-graph baseline.
+- The HeteroTransformer is the strongest graph model in the current run.
+
 ## Notes
 
 - `src/graph/` owns `HeteroData` construction.
