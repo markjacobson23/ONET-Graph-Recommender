@@ -1,6 +1,6 @@
 # O*NET Graph Recommender
 
-A heterogeneous graph ML pipeline that classifies occupations by SOC code using O*NET skill, knowledge, and ability data. Compares a degree-based majority baseline, MLP, HeteroSAGE, and HeteroTransformer across three graph density variants and five random seeds.
+A heterogeneous graph ML pipeline that classifies occupations by SOC major group using O*NET skill, knowledge, and ability data. Compares a majority-class baseline, a two-layer MLP, HeteroSAGE, and HeteroTransformer across three graph density variants and five random seeds.
 
 ---
 
@@ -19,20 +19,34 @@ Three graph variants were built to test how edge density affects model performan
 | Variant | Forward Edges | Description |
 |---|---|---|
 | `dense` | 107,280 | All occupation-descriptor edges retained |
-| `core_broad` | 6,234 | ~6% of edges; importance score ≥ threshold |
+| `core_broad` | 6,234 | ~6% of edges; importance score ≥ broad threshold |
 | `core_strict` | 1,450 | ~1.4% of edges; high-importance only |
 
-Node types: **OCCUPATION** (894 nodes), **SKILL** (35), **KNOWLEDGE** (33), **ABILITY** (52)
+Node types: **OCCUPATION** (894), **SKILL** (35), **KNOWLEDGE** (33), **ABILITY** (52)
 
-Edge types: `occupation→skill`, `occupation→knowledge`, `occupation→ability` (and reverses)
+Edge types: `occupation→skill`, `occupation→knowledge`, `occupation→ability` (and their reverses)
 
-The graph is heterogeneous — occupations and descriptors are semantically different node types and are handled separately throughout the pipeline using PyTorch Geometric's `HeteroData`.
+The graph is heterogeneous — occupations and descriptors are semantically different node types handled separately throughout using PyTorch Geometric's `HeteroData`. Edge attributes (importance and proficiency scores) are passed as `edge_attr` in models that support them.
+
+---
+
+## Models
+
+**Majority class baseline** — predicts the most frequent SOC group in the training split for every occupation.
+
+**MLP** — two-layer fully connected network operating on occupation node features only; no graph structure used.
+
+**HeteroSAGE** — two-layer heterogeneous GraphSAGE using `SAGEConv` per edge type, aggregated with `HeteroConv`. Does not use edge attributes.
+
+**HeteroTransformer** — single-layer heterogeneous Transformer using `TransformerConv` per edge type. Uses edge attributes (importance and proficiency scores).
+
+All learned models trained with `cross_entropy` loss, Adam optimizer (lr=0.001, weight_decay=1e-4), early stopping on validation accuracy (patience=200, max 2500 epochs). Best model state is restored before final evaluation.
 
 ---
 
 ## Results
 
-All models evaluated across 5 random seeds. Metric: test accuracy and macro F1 on held-out occupations.
+All models evaluated across 5 random seeds (0–4) with a 70/15/15 train/val/test split.
 
 ### Test Accuracy (mean ± std, 5 seeds)
 
@@ -62,10 +76,10 @@ All models evaluated across 5 random seeds. Metric: test accuracy and macro F1 o
 
 **Key findings:**
 
-- On the `dense` graph, HeteroTransformer is the strongest model (+3.0 pp accuracy, +3.3 pp macro F1 over MLP), and wins 3 of 5 seeds.
-- On sparser graphs (`core_broad`, `core_strict`), the MLP matches or beats the GNNs — suggesting graph structure adds signal only when edges are dense enough to carry meaningful neighborhood information.
-- HeteroSAGE is high-variance and underperforms on sparse graphs, but becomes competitive on `core_strict` where edges are high-signal by construction.
-- The task has 9 SOC major group classes with imbalanced distribution; all models use class-weighted loss to handle this.
+- On the `dense` graph, HeteroTransformer is the strongest model (+3.0 pp accuracy, +3.3 pp macro F1 over MLP) and wins 3 of 5 seeds. The HeteroTransformer uses edge attributes (importance and proficiency scores), which likely explains its advantage on the dense graph where those signals are richest.
+- On sparser graphs (`core_broad`, `core_strict`), the MLP matches or beats both GNNs — suggesting graph structure adds meaningful signal only when edge density is high enough.
+- HeteroSAGE is the highest-variance model, underperforming badly on sparse graphs but becoming competitive on `core_strict` where remaining edges are high-importance by construction.
+- The task has 9 SOC major group classes with unbalanced distribution; macro F1 is the primary metric since it weights all classes equally regardless of frequency.
 
 ---
 
@@ -76,8 +90,9 @@ raw SQLite (O*NET)
   → ETL: base descriptor tables
   → feature engineering: featured tables
   → graph construction: HeteroData (.pt)
-  → model training + evaluation: baseline / MLP / GNN
-  → results: metrics CSV + comparison figures
+  → model training + early stopping
+  → multi-seed evaluation across graph variants
+  → results CSV + summary
 ```
 
 Run the full pipeline:
@@ -100,9 +115,9 @@ src/
   data/onet/       ETL: raw SQLite → base → featured tables
   graph/           HeteroData construction and label prep
   models/
-    baselines/     majority class + MLP
+    baselines/     majority class baseline and MLP
     gnn/           HeteroSAGE and HeteroTransformer
-    evaluation/    training loop, metrics, comparison output
+    evaluation/    training loop, metrics, multi-seed comparison
 docs/              result snapshots and figures
 tests/             unit tests
 ```
@@ -111,14 +126,14 @@ tests/             unit tests
 
 ## Data Source
 
-[O*NET Resource Center](https://www.onetcenter.org/database.html) — public domain occupational data from the U.S. Department of Labor. The raw data is loaded into a local SQLite database and not included in this repo; download instructions are in `docs/data_setup.md`.
+[O*NET Resource Center](https://www.onetcenter.org/database.html) — public domain occupational data from the U.S. Department of Labor. The raw data is loaded into a local SQLite database and is not included in this repo. Download the O*NET database files from the link above and follow the setup instructions in `docs/data_setup.md`.
 
 ---
 
 ## Design Notes
 
-**Why heterogeneous GNNs?** Occupations and descriptors are semantically different node types. A homogeneous GNN would treat them identically; `HeteroData` with type-specific message passing keeps the representations separate until the readout layer.
+**Why heterogeneous GNNs?** Occupations and descriptors are semantically different node types. A homogeneous GNN would treat them identically; `HeteroData` with type-specific message passing keeps their representations separate until the readout layer, which operates only on occupation nodes.
 
-**Why three graph variants?** Edge density is a meaningful hyperparameter when working with bipartite graphs from scored surveys. The O*NET importance scores have a natural cutoff structure, and testing across density levels reveals whether the graph structure is helping (dense) or just adding noise (sparse).
+**Why three graph density variants?** O*NET importance scores have a natural cutoff structure. Testing across density levels reveals whether graph structure helps (dense) or adds noise (sparse) — which turned out to be the most interesting result.
 
-**Why class-weighted loss?** SOC major groups are unbalanced. Without reweighting, models collapse toward predicting the plurality class, inflating accuracy while macro F1 stays near zero.
+**Why early stopping on validation accuracy?** The model with the best validation accuracy is restored before final evaluation, rather than the model at the final epoch, to avoid overfitting on a task with limited labeled data.
