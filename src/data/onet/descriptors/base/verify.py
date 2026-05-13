@@ -1,22 +1,25 @@
+from __future__ import annotations
+
 import pandas as pd
 
 
 def verify_occupation_nodes(
     occupation_rows: pd.DataFrame,
     occupation_nodes: pd.DataFrame,
-):
-    """Verify that the occupation nodes table has the correct number of rows."""
+) -> None:
+    """Check that occupation nodes match the source occupation universe."""
 
     assert len(occupation_nodes) == occupation_rows["onetsoc_code"].nunique(), (
         "Occupation node count does not match unique occupations in source data"
     )
 
+
 def verify_descriptor_nodes(
     descriptor_rows: pd.DataFrame,
     descriptor_nodes: pd.DataFrame,
     descriptor_config: dict,
-):
-    """Verify that the descriptor nodes table has the correct number of rows."""
+) -> None:
+    """Check that descriptor nodes preserve the source row count."""
 
     descriptor_name = descriptor_config["node_type"]
 
@@ -24,13 +27,13 @@ def verify_descriptor_nodes(
         f"{descriptor_name} node count does not match unique {descriptor_name}s in source data"
     )
 
+
 def verify_occupation_descriptor_edges(
     occupation_descriptor_edge_rows: pd.DataFrame,
     descriptor_edges: pd.DataFrame,
     descriptor_config: dict,
-):
-    """Verify that the occupation-descriptor edges table has a valid number of rows,
-     no duplicates, no missing values, and valid importance and level values."""
+) -> None:
+    """Check that occupation-descriptor edges remain valid after indexing."""
 
     descriptor_name = descriptor_config["node_type"]
     idx_col = descriptor_config["idx_col"]
@@ -66,7 +69,3 @@ def verify_occupation_descriptor_edges(
     assert descriptor_edges["level"].between(0, 7).all(), (
         "Level values outside expected range [0, 7]"
     )
-
-
-
-

@@ -1,5 +1,9 @@
+from __future__ import annotations
+
+
 def get_node_schema(node_config: dict) -> dict:
-    """Get the corresponding node schema for a given node config."""
+    """Build the shared node schema used by the ETL and graph code."""
+
     return {
         "idx_col": node_config["idx_col"],
         "id_col": node_config["id_col"],
