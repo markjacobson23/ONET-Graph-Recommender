@@ -1,59 +1,66 @@
-import torch
+from __future__ import annotations
+
 from pathlib import Path
+
 import pandas as pd
+import torch
 from pandas import DataFrame
-from pandas.io.parsers import TextFileReader
 from torch_geometric.data import HeteroData
 
-from src.graph.labels import build_soc_label_mapping, build_occupation_labels
+from src.graph.labels import build_occupation_labels, build_soc_label_mapping
 
 
 def load_heterodata(graph_path: Path) -> HeteroData:
+    """Load a saved PyG HeteroData graph from disk."""
+
     return torch.load(
         graph_path,
         map_location="cpu",
         weights_only=False,
     )
 
-def load_occupation_nodes(featured_nodes_dir: Path) -> TextFileReader | DataFrame:
+
+def load_occupation_nodes(featured_nodes_dir: Path) -> DataFrame:
+    """Load the featured occupation node table."""
+
     return pd.read_csv(featured_nodes_dir / "occupation_nodes.csv")
+
 
 def add_occupation_labels(
     data: HeteroData,
     occupation_nodes: pd.DataFrame,
-) -> tuple[HeteroData, dict, dict]:
+) -> tuple[HeteroData, dict[str, int], dict[int, str]]:
+    """Attach SOC major-group labels to occupation nodes."""
 
     label_to_idx, idx_to_label = build_soc_label_mapping(occupation_nodes)
-
     labels = build_occupation_labels(
         occupation_nodes,
         label_to_idx,
     )
 
     data["occupation"].y = labels
-
     return data, label_to_idx, idx_to_label
 
+
 def add_train_val_test_masks(
-    data,
-    train_ratio=0.7,
-    val_ratio=0.15,
-    seed=42,
+    data: HeteroData,
+    train_ratio: float = 0.7,
+    val_ratio: float = 0.15,
+    seed: int = 42,
 ) -> HeteroData:
+    """Add random train, validation, and test masks to occupation nodes."""
 
     num_nodes = data["occupation"].num_nodes
-
     generator = torch.Generator()
     generator.manual_seed(seed)
 
     perm = torch.randperm(num_nodes, generator=generator)
-
     num_train = int(train_ratio * num_nodes)
     num_val = int(val_ratio * num_nodes)
 
     train_idx = perm[:num_train]
-    val_idx = perm[num_train:num_train + num_val]
-    test_idx = perm[num_train + num_val:]
+    val_idx = perm[num_train : num_train + num_val]
+    test_idx = perm[num_train + num_val :]
 
     train_mask = torch.zeros(num_nodes, dtype=torch.bool)
     val_mask = torch.zeros(num_nodes, dtype=torch.bool)
@@ -68,4 +75,3 @@ def add_train_val_test_masks(
     data["occupation"].test_mask = test_mask
 
     return data
-

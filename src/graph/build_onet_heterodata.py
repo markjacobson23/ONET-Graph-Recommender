@@ -17,10 +17,17 @@ EDGE_ATTR_COLS = ["importance", "level"]
 
 
 def get_feature_columns(node_table: pd.DataFrame, metadata_cols: list[str]) -> list[str]:
+    """Return feature columns by excluding metadata columns."""
+
     return node_table.drop(columns=metadata_cols).columns
 
 
-def build_node_metadata(node_table: pd.DataFrame, node_schema: dict) -> dict:
+def build_node_metadata(
+    node_table: pd.DataFrame,
+    node_schema: dict,
+) -> dict[str, object]:
+    """Build a compact metadata record for a node table."""
+
     idx_col = node_schema["idx_col"]
     id_col = node_schema["id_col"]
     name_col = node_schema["name_col"]
@@ -59,7 +66,9 @@ def build_edge_metadata(
     end_node_schema: dict,
     relation_name: str,
     edge_attr_cols: list[str],
-) -> dict:
+) -> dict[str, dict[str, object]]:
+    """Build metadata for a forward edge type and its reverse edge type."""
+
     start_node_type = start_node_schema["node_type"]
     end_node_type = end_node_schema["node_type"]
 
@@ -89,7 +98,9 @@ def build_metadata(
     descriptor_nodes_by_type: dict[str, pd.DataFrame],
     edge_tables_by_type: dict[str, pd.DataFrame],
     edge_attr_cols: list[str],
-) -> dict:
+) -> dict[str, dict[str, object]]:
+    """Build graph metadata for nodes and edges."""
+
     occupation_schema = get_node_schema(OCCUPATION_CONFIG)
 
     metadata = {
@@ -165,7 +176,7 @@ def build_edge_tensor(
     end_node_schema: dict,
     attr_cols: list[str],
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Build edge tensors from an edge table and node schemas."""
+    """Build edge index and edge attribute tensors from an edge table."""
 
     start_idx_col = start_node_schema["idx_col"]
     end_idx_col = end_node_schema["idx_col"]
@@ -207,7 +218,7 @@ def add_node_to_heterodata(
     node_type: str,
     data: HeteroData,
 ) -> HeteroData:
-    """Add a node type to the heterogeneous graph data."""
+    """Add a node feature matrix to a HeteroData object."""
 
     data[node_type].x = x
 
@@ -222,7 +233,7 @@ def add_edge_to_heterodata(
     end_node_type: str,
     end_node_relation_name: str,
 ) -> HeteroData:
-    """Add an edge and its reverse to the heterogeneous graph data."""
+    """Add a relation and its reverse relation to the graph."""
 
     data[
         start_node_type,
@@ -257,6 +268,8 @@ def filter_edge_table(
     edge_table: pd.DataFrame,
     graph_variant: str,
 ) -> pd.DataFrame:
+    """Filter descriptor edges according to the selected graph variant."""
+
     if graph_variant == "dense":
         return edge_table.copy()
 
@@ -276,18 +289,22 @@ def filter_edge_table(
 
 
 def save_heterodata(data: HeteroData, output_dir: Path, graph_variant: str) -> None:
+    """Save a serialized HeteroData object to the output directory."""
+
     output_dir.mkdir(parents=True, exist_ok=True)
     torch.save(data, output_dir / f"{graph_variant}_heterodata.pt")
 
 
 def save_metadata(metadata: dict, output_dir: Path, graph_variant: str) -> None:
+    """Save graph metadata as JSON."""
+
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with open(output_dir / f"{graph_variant}_metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
 
 
-def build_graph(graph_variant: str = "dense"):
+def build_graph(graph_variant: str = "dense") -> None:
     """Build a heterogeneous graph from the featured occupation and descriptor tables."""
 
     config = load_config()
@@ -300,8 +317,8 @@ def build_graph(graph_variant: str = "dense"):
 
     data = HeteroData()
 
-    descriptor_nodes_by_type = {}
-    edge_tables_by_type = {}
+    descriptor_nodes_by_type: dict[str, pd.DataFrame] = {}
+    edge_tables_by_type: dict[str, pd.DataFrame] = {}
 
     occupation_schema = get_node_schema(OCCUPATION_CONFIG)
 
@@ -386,14 +403,12 @@ def build_graph(graph_variant: str = "dense"):
     print(f"{graph_variant} HeteroData graph and metadata saved successfully.")
 
 
-def main():
+def main() -> None:
     build_graph(graph_variant="dense")
     build_graph(graph_variant="core_broad")
     build_graph(graph_variant="core_strict")
 
 if __name__ == "__main__":
     main()
-
-
 
 
