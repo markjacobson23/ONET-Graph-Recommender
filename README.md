@@ -90,7 +90,9 @@ Each graph variant gets a `.pt` graph file and a matching metadata JSON file.
 
 ## Results
 
-Current experiment snapshots live in [docs/results.md](/Users/markjacobson/coding/Job_Recommendation_Model/docs/results.md).
+Current experiment snapshots live in [docs/results.md](docs/results.md).
+
+For O*NET downloads and source data, start at the [O*NET Resource Center](https://www.onetcenter.org/).
 
 The SOC classifier comparison outputs and figures are written under:
 
