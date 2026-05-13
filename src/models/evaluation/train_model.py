@@ -7,6 +7,73 @@ import torch.nn.functional as F
 from torch_geometric.data import HeteroData
 
 
+def compute_classification_metrics(
+    y_true: torch.Tensor,
+    y_pred: torch.Tensor,
+    include_balanced_accuracy: bool = False,
+) -> dict[str, float]:
+    """Compute accuracy, macro F1, and optional balanced accuracy."""
+
+    y_true = y_true.detach().cpu().view(-1)
+    y_pred = y_pred.detach().cpu().view(-1)
+
+    total = y_true.numel()
+    accuracy = (
+        (y_true == y_pred).sum().item() / total if total > 0 else 0.0
+    )
+
+    if total == 0 and y_pred.numel() == 0:
+        label_values: list[int] = []
+    else:
+        label_values = torch.unique(torch.cat([y_true, y_pred])).tolist()
+
+    macro_f1_scores: list[float] = []
+    balanced_accuracy_recalls: list[float] = []
+
+    for label in label_values:
+        true_positive = ((y_true == label) & (y_pred == label)).sum().item()
+        false_positive = ((y_true != label) & (y_pred == label)).sum().item()
+        false_negative = ((y_true == label) & (y_pred != label)).sum().item()
+
+        precision_denominator = true_positive + false_positive
+        recall_denominator = true_positive + false_negative
+
+        precision = (
+            true_positive / precision_denominator
+            if precision_denominator > 0
+            else 0.0
+        )
+        recall = (
+            true_positive / recall_denominator if recall_denominator > 0 else 0.0
+        )
+
+        if precision + recall > 0:
+            f1 = 2.0 * precision * recall / (precision + recall)
+        else:
+            f1 = 0.0
+
+        macro_f1_scores.append(f1)
+
+        if include_balanced_accuracy and recall_denominator > 0:
+            balanced_accuracy_recalls.append(recall)
+
+    results: dict[str, float] = {
+        "accuracy": accuracy,
+        "macro_f1": sum(macro_f1_scores) / len(macro_f1_scores)
+        if macro_f1_scores
+        else 0.0,
+    }
+
+    if include_balanced_accuracy:
+        results["balanced_accuracy"] = (
+            sum(balanced_accuracy_recalls) / len(balanced_accuracy_recalls)
+            if balanced_accuracy_recalls
+            else 0.0
+        )
+
+    return results
+
+
 def get_model_logits(
     model: torch.nn.Module,
     data: HeteroData,
@@ -73,8 +140,9 @@ def evaluate(
     data: HeteroData,
     graph_aware: bool,
     edge_aware: bool,
+    include_balanced_accuracy: bool = False,
 ) -> dict[str, float]:
-    """Compute split accuracy for the current model."""
+    """Compute split metrics for the current model."""
 
     model.eval()
 
@@ -92,9 +160,18 @@ def evaluate(
 
     for split_name in ["train", "val", "test"]:
         mask = data["occupation"][f"{split_name}_mask"]
-        correct = (predictions[mask] == y[mask]).sum().item()
-        total = mask.sum().item()
-        results[f"{split_name}_accuracy"] = correct / total if total > 0 else 0.0
+        split_metrics = compute_classification_metrics(
+            y_true=y[mask],
+            y_pred=predictions[mask],
+            include_balanced_accuracy=include_balanced_accuracy,
+        )
+        results[f"{split_name}_accuracy"] = split_metrics["accuracy"]
+        results[f"{split_name}_macro_f1"] = split_metrics["macro_f1"]
+
+        if include_balanced_accuracy:
+            results[f"{split_name}_balanced_accuracy"] = split_metrics[
+                "balanced_accuracy"
+            ]
 
     return results
 
@@ -105,6 +182,7 @@ def train_with_early_stopping(
     optimizer: torch.optim.Optimizer,
     graph_aware: bool,
     edge_aware: bool,
+    include_balanced_accuracy: bool = False,
     num_epochs: int = 2500,
     patience: int = 200,
     print_every: int = 100,
@@ -130,6 +208,7 @@ def train_with_early_stopping(
             data=data,
             graph_aware=graph_aware,
             edge_aware=edge_aware,
+            include_balanced_accuracy=include_balanced_accuracy,
         )
 
         val_accuracy = results["val_accuracy"]
@@ -162,6 +241,7 @@ def train_with_early_stopping(
         data=data,
         graph_aware=graph_aware,
         edge_aware=edge_aware,
+        include_balanced_accuracy=include_balanced_accuracy,
     )
     final_results["best_epoch"] = best_epoch
     final_results["best_val_accuracy"] = best_val_accuracy
