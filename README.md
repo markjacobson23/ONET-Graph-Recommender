@@ -1,4 +1,4 @@
-# O*NET Graph Recommender
+# O*NET Occupation Classification with Heterogeneous Graph Neural Networks
 
 A heterogeneous graph ML pipeline that classifies occupations by SOC major group using O*NET skill, knowledge, and ability data. Compares a majority-class baseline, a two-layer MLP, HeteroSAGE, and HeteroTransformer across three graph density variants and five random seeds.
 
